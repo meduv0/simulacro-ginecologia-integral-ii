@@ -3121,7 +3121,12 @@ transition-delay:0s!important;
       select.append(new Option('Elegir', '-1'));
       for(const choice of matchingRecord(q).order)select.append(new Option(q.matching.right[choice],String(choice)));
       select.addEventListener('change',()=>{
-        linkConcept(q,index,Number(select.value));
+        const choice=Number(select.value);
+        if(choice>=0)linkConcept(q,index,choice);
+        else if(!matchingLocked(q)){
+          matchingRecord(q).pairs[index]=-1;
+          saveMatching(q);
+        }
         refresh();
       });
       region.append(badge,value,select);
@@ -3166,6 +3171,7 @@ transition-delay:0s!important;
     refresh();
     return block;
   }
+
 
   function createGridFill(q,position){
     const data=q.tableFill,block=node('section','matching-direct table-fill table-fill-v2');
