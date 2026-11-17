@@ -3176,7 +3176,7 @@ transition-delay:0s!important;
   function createGridFill(q,position){
     const data=q.tableFill,block=node('section','matching-direct table-fill table-fill-v2');
     block.setAttribute('aria-label','Tabla de la pregunta '+position);
-    block.append(node('p','table-fill-instruction','Completa las celdas vacías y confirma la tabla. Una respuesta puede utilizarse más de una vez.'));
+    block.append(node('p','table-fill-instruction','Completa las celdas vacías y confirma la tabla.' + (data.allowReuse ? ' Puedes repetir una respuesta.' : '')));
     const frame=node('div','table-fill-frame'),table=node('table','table-fill-grid');
     if(data.headers.length>3){table.classList.add('table-fill-wide');frame.tabIndex=0;frame.setAttribute('aria-label','Tabla desplazable horizontalmente');}
     table.append(node('caption','',data.caption));
