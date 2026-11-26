@@ -673,7 +673,7 @@ transition-delay:0s!important;
     </details>
   </div>
   <nav id="learning-stages" class="learning-stages" aria-label="Pasos de esta lámina"></nav>
-  <h3 id="learning-lesson-title" class="learning-lesson-title" tabindex="-1"></h3>
+  <h3 id="learning-lesson-title" class="sr-only" tabindex="-1"></h3>
   <div id="learning-stage"></div>
   <footer id="learning-navigation" class="marathon-after learning-navigation"></footer>
 </section>
@@ -5928,10 +5928,6 @@ const opening15=createOpening15();
   color:var(--topic-color); border-color:var(--topic-color); font-weight:650;
   background:color-mix(in srgb,var(--topic-color) 10%,var(--paper));
   box-shadow:inset 0 -2px var(--topic-color);
-}
-.learning-lesson-title {
-  margin:0 0 13px; color:var(--heading); font-size:clamp(1.14rem,2.5vw,1.45rem);
-  scroll-margin-top:16px;
 }
 .learning-study { display:grid; grid-template-columns:minmax(0,1.8fr) minmax(0,1fr); align-items:start; gap:19px; }
 .learning-figure { margin:0; min-width:0; }
