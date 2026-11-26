@@ -648,23 +648,30 @@ transition-delay:0s!important;
 <footer class="footer"><p id="save-note">Tus respuestas se guardan en este navegador.</p><p>Casos clínicos y ejercicios de práctica elaborados a partir de las presentaciones de clase.</p><p>Las pautas distinguen la clave del banco de los criterios actualizados cuando corresponde. Las diapositivas se pueden ampliar pulsándolas.</p><p>Archivo autónomo: preguntas, pautas e imágenes funcionan sin conexión. Los enlaces al material y fuentes externas requieren internet.</p></footer>
 </div>
 <section id="learning-view" class="learning-view" aria-labelledby="learning-title" hidden>
-  <section id="learning-bar" class="marathon-bar learning-bar" aria-label="Progreso de aprendizaje">
-    <div class="marathon-meta">
-      <h2 id="learning-title" class="marathon-kicker">Modo aprendizaje</h2>
-      <p id="learning-progress" class="marathon-position"></p>
-    </div>
-    <div class="marathon-actions"><button type="button" id="learning-exit" class="reset">Salir</button></div>
-    <progress id="learning-meter" aria-label="Diapositivas practicadas"></progress>
-  </section>
-  <div class="learning-selection">
-    <label class="learning-picker" for="learning-chapter-picker">Capítulo
-      <select id="learning-chapter-picker"></select>
-    </label>
-    <label class="learning-picker" for="learning-picker">Diapositiva oficial
-      <select id="learning-picker"></select>
-    </label>
+  <h2 id="learning-title" class="sr-only">Modo aprendizaje</h2>
+  <div class="learning-context">
+    <h3 id="learning-chapter" class="topic-heading"></h3>
+    <details id="learning-menu" class="learning-menu">
+      <summary class="reset">Cambiar lámina</summary>
+      <div class="learning-menu-panel">
+        <div class="learning-selection">
+          <label class="learning-picker" for="learning-chapter-picker">Capítulo
+            <select id="learning-chapter-picker"></select>
+          </label>
+          <label class="learning-picker" for="learning-picker">Diapositiva oficial
+            <select id="learning-picker"></select>
+          </label>
+        </div>
+        <div class="learning-menu-footer">
+          <div class="learning-menu-progress">
+            <p id="learning-progress"></p>
+            <progress id="learning-meter" aria-label="Diapositivas practicadas"></progress>
+          </div>
+          <button type="button" id="learning-exit" class="reset">Salir</button>
+        </div>
+      </div>
+    </details>
   </div>
-  <h3 id="learning-chapter" class="topic-heading"></h3>
   <nav id="learning-stages" class="learning-stages" aria-label="Pasos de esta lámina"></nav>
   <h3 id="learning-lesson-title" class="learning-lesson-title" tabindex="-1"></h3>
   <div id="learning-stage"></div>
@@ -5248,6 +5255,7 @@ const opening15=createOpening15();
   let learningLesson = learningById.get(learningState.last) || learningByLegacyId.get(learningState.last) || learningLessons[0];
   let learningStep = learningRecord(learningLesson).step;
   let learningReturnScroll = 0;
+  const learningMenu = $('learning-menu');
 
   function loadLearningState() {
     try {
@@ -5598,13 +5606,13 @@ const opening15=createOpening15();
     renderLearning();
   }
 
-  function selectLearningLesson(slide, firstStep = false) {
+  function selectLearningLesson(slide, firstStep = false, moveFocus = true) {
     learningLesson = learningById.get(slide);
     learningStep = firstStep ? 0 : learningRecord(learningLesson).step;
     const record = learningRecord(learningLesson);
     record.step = learningStep;
     saveLearning(record);
-    renderLearning();
+    renderLearning(moveFocus);
   }
 
   function updateLearningControls(record) {
@@ -5667,14 +5675,26 @@ const opening15=createOpening15();
     }
   }
 
-  $('learning-picker').addEventListener('change', event => selectLearningLesson(event.target.value));
+  $('learning-picker').addEventListener('change', event => {
+    learningMenu.open = false;
+    selectLearningLesson(event.target.value);
+  });
   $('learning-chapter-picker').addEventListener('change', event => {
     const chapterLessons = lessonsByChapter.get(event.target.value);
     const next = chapterLessons.find(lesson => !learningRecord(lesson).practiced) || chapterLessons[0];
-    selectLearningLesson(next.slide, true);
+    selectLearningLesson(next.slide, true, false);
+  });
+  learningMenu.addEventListener('keydown', event => {
+    if (event.key !== 'Escape' || !learningMenu.open) return;
+    learningMenu.open = false;
+    learningMenu.querySelector('summary').focus();
+  });
+  document.addEventListener('click', event => {
+    if (learningMenu.open && !learningMenu.contains(event.target)) learningMenu.open = false;
   });
   function closeLearning(restorePosition = true) {
     if ($('learning-view').hidden) return;
+    learningMenu.open = false;
     simulacroApp.classList.remove('learning-on');
     $('learning-button').setAttribute('aria-pressed', 'false');
     $('learning-view').hidden = true;
@@ -5795,16 +5815,32 @@ const opening15=createOpening15();
 .learning-on #original-order-button, .learning-on #shuffle-button, .learning-on #reset-button { display:none; }
 .learning-view { --topic-color:var(--topic-light,var(--accent)); }
 [data-theme="dark"] .learning-view { --topic-color:var(--topic-dark,var(--accent)); }
-.learning-view .learning-bar { position:relative; top:auto; grid-template-columns:minmax(0,1fr) auto; margin-bottom:20px; }
-.learning-bar h2, .learning-bar p { margin:0; }
-.learning-bar .marathon-actions { grid-column:auto; }
-.learning-bar progress {
-  display:block; grid-column:1/-1; width:100%; height:5px; accent-color:var(--topic-color);
-  position:absolute; bottom:0; left:0; border:0;
+.learning-context {
+  display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:14px;
+  margin:0 0 12px; position:relative; z-index:1;
 }
-.learning-bar progress::-webkit-progress-bar { background:var(--subtle); }
-.learning-bar progress::-webkit-progress-value { background:var(--topic-color); }
-.learning-bar progress::-moz-progress-bar { background:var(--topic-color); }
+.learning-context .topic-heading { margin:0; scroll-margin-top:16px; }
+.learning-menu { position:relative; }
+.learning-menu summary {
+  list-style:none; display:flex; align-items:center; gap:.45em; min-height:38px;
+  padding:6px 9px; white-space:nowrap; cursor:pointer;
+}
+.learning-menu summary::-webkit-details-marker { display:none; }
+.learning-menu summary::after {
+  content:""; width:.4em; height:.4em; margin:0 1px 3px 0;
+  border:solid currentColor; border-width:0 1px 1px 0; transform:rotate(45deg);
+}
+.learning-menu[open] summary::after { margin-bottom:0; transform:rotate(225deg); }
+.learning-menu-panel {
+  position:absolute; inset-inline-end:0; top:calc(100% + 6px); z-index:2;
+  width:min(520px,calc(100vw - 43px)); padding:13px;
+  background:var(--paper); border:1px solid var(--line); border-radius:8px;
+  box-shadow:0 5px 18px #132d4024;
+}
+.learning-menu-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:11px; }
+.learning-menu-progress { flex:1; min-width:0; color:var(--muted); font-size:.78rem; }
+.learning-menu-progress p { margin:0 0 5px; }
+.learning-menu-progress progress { display:block; width:100%; height:5px; accent-color:var(--topic-color); }
 .learning-selection { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.25fr); gap:12px; }
 .learning-picker { display:grid; gap:4px; color:var(--muted); font-size:.8rem; font-weight:600; }
 .learning-view :is(.learning-picker select,.learning-input) {
@@ -5815,7 +5851,6 @@ const opening15=createOpening15();
 .learning-view select:focus-visible, .learning-view .option:focus-within {
   outline:2px solid var(--topic-color); outline-offset:2px;
 }
-.learning-view .topic-heading { margin:23px 0 13px; scroll-margin-top:16px; }
 .learning-stages { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; margin-bottom:19px; }
 .learning-step.reset { min-height:42px; padding:7px 5px; line-height:1.3; }
 .learning-step[aria-current="step"] {
